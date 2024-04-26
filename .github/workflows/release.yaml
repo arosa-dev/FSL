@@ -1,0 +1,49 @@
+name: release
+on: 
+  push:
+    branches:
+      - "prod"
+
+jobs:
+  azure-login:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: azure/login@v2
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+    - name: Azure CLI script
+      uses: azure/cli@v2
+      with:
+        azcliversion: latest
+        inlineScript: |
+          az account show
+    - name: terraform Setup 
+      uses: hashicorp/setup-terraform@v3
+    - name: terraform deploy 
+      run: | 
+        terraform init 
+        terraform plan
+        terraform apply -auto-approve
+      working-directory: terraform-blob/
+    - name: terraform container
+      run: | 
+        terraform init 
+        terraform import azurerm_storage_container.web_container https://fslsa1.blob.core.windows.net/\$web
+        terraform plan
+        terraform apply -auto-approve
+      working-directory: terraform-blob/container/
+    - name: setup node
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 15
+    - name: build of the code
+      run: |
+          npm install
+          npm run lint 
+          npm run prettier -- --write
+          CI=true npm run test
+          npm run build 
+      working-directory: codebase/rdicidr-0.1.0/
+    - name: azure upload 
+      run: az storage blob upload-batch -d \$web --account-name fslsa1 -s codebase/rdicidr-0.1.0/build
