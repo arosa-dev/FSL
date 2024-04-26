@@ -1,0 +1,17 @@
+on: 
+  pull_request:
+    branches: ["prod","stage","devel"]
+jobs:
+  restriction:
+    runs-on: ubuntu-latest
+    steps:
+      - name: restriction 
+        run: | 
+          if [[ "${{ github.base_ref }}" == "prod" && "${{ github.head_ref }}" != "stage" ]]; then
+            echo "::error:: Merge into prod must from stage"
+            exit 1
+          fi
+          if [[ "${{ github.base_ref }}" == "stage" && "${{ github.head_ref }}" != "devel" ]]; then
+            echo "::error:: Merge into prod must from stage"
+            exit 1
+          fi
