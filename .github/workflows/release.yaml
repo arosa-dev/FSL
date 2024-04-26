@@ -34,7 +34,7 @@ jobs:
         terraform apply -auto-approve
       working-directory: terraform-blob/container/
     - name: setup node
-    - uses: actions/setup-node@v4
+      uses: actions/setup-node@v4
       with:
         node-version: 15
     - name: build of the code
